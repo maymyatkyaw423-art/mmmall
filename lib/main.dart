@@ -1,122 +1,122 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const ProviderScope(child: MmMallApp()));
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
+class MmMallApp extends StatelessWidget {
+  const MmMallApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'MM Mall',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.amber),
+      home: const ProductGridPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+/* ---------- STATE ---------- */
+final cartProvider = StateProvider<List<Product>>((ref) => []);
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+class Product {
+  final int id;
+  final String name;
+  final int price;
+  final String image;
+  Product(
+      {required this.id,
+      required this.name,
+      required this.price,
+      required this.image});
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+final productList = [
+  Product(id: 1, name: 'Shan Noodle', price: 800, image: ''),
+  Product(id: 2, name: 'Laphet Thoke', price: 1200, image: ''),
+  Product(id: 3, name: 'Myanmar Coffee', price: 2500, image: ''),
+  Product(id: 4, name: 'Longyi', price: 5500, image: ''),
+];
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
+/* ---------- UI ---------- */
+class ProductGridPage extends ConsumerWidget {
+  const ProductGridPage({super.key});
   @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.watch(cartProvider);
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+        title: const Text('MM Mall'),
+        actions: [
+          Badge(
+            label: Text('${cart.length}'),
+            child: IconButton(
+              icon: const Icon(Icons.shopping_cart),
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Cart total: ${cart.length} items')),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: GridView.builder(
+        padding: const EdgeInsets.all(12),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: productList.length,
+        itemBuilder: (_, i) => ProductCard(product: productList[i]),
+      ),
+    );
+  }
+}
+
+class ProductCard extends ConsumerWidget {
+  final Product product;
+  const ProductCard({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final inCart = ref.watch(cartProvider).contains(product);
+    return Card(
+      elevation: 2,
+      child: Column(
+        children: [
+          Expanded(
+            child: Container(
+              color: Colors.grey.shade200,
+              alignment: Alignment.center,
+              child: const FlutterLogo(size: 60),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                Text(product.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text('${product.price} Ks',
+                    style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 6),
+                FilledButton(
+                  onPressed: () {
+                    ref.read(cartProvider.notifier).update((state) {
+                      if (inCart) {
+                        return state.where((p) => p.id != product.id).toList();
+                      }
+                      return [...state, product];
+                    });
+                  },
+                  child: Text(inCart ? 'Remove' : 'Add to Cart'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
